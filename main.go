@@ -160,7 +160,7 @@ func startApp(){ // go busca el main que esta en server.go (este archivo) y busc
 	configureRuntime()
 	initGinEngine()
 	mapUrlsToControllers()
-	Router.Run(":8080")
+	Router.Run(":9090")
 
 }
 
