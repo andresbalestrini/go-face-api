@@ -11,10 +11,6 @@ func mapUrlsToControllers() {
 
 	Router.GET("/ping", Ping)
 	Router.GET("/profile", face_controller.Dataprofile)
-	Router.GET("/likes", face_controller.Publish)
-
-	//Router.GET("/FBLogin", face_controller.Fblogin)
-
 }
 
 func Ping(c *gin.Context) { 

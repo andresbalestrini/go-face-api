@@ -1,18 +1,27 @@
 package face_service
 
 import(
-
-    "fmt"
     "net/http"
 	"strings"
-    "strconv"    
-    "github.com/andresbalestrini/go-face-api/model/token"    
+    "strconv"
+    "github.com/andresbalestrini/go-face-api/model/token"
+	"io/ioutil"    
 )
+func Readbody(response *http.Response) (string, error){
+	var str string
+	htmlData, err := ioutil.ReadAll(response.Body) //<--- here!
 
+ 	if err != nil {
+		 str:=""
+		 return str,err
+ 	}	
+	str = string(htmlData)
+	return str,err
+}
 
 func Readhttpbody(response *http.Response) string {
 
- 	fmt.Println("Reading body")
+ 	//fmt.Println("Reading body")
 
  	bodyBuffer := make([]byte, 5000)
  	var str string
