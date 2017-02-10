@@ -10,7 +10,9 @@ import(
 func mapUrlsToControllers() {
 
 	Router.GET("/ping", Ping)
-	Router.GET("/profile", face_controller.Dataprofile)
+	Router.GET("/permiso", face_controller.Permissions)
+	//Router.GET("/familia", face_controller.Family)
+	Router.POST("/publicar", face_controller.Publish)
 }
 
 func Ping(c *gin.Context) { 
