@@ -11,7 +11,7 @@ func mapUrlsToControllers() {
 
 	Router.GET("/ping", Ping)
 	Router.GET("/permiso", face_controller.Permissions)
-	//Router.GET("/familia", face_controller.Family)
+	Router.POST("/perfil", face_controller.Profile)
 	Router.POST("/publicar", face_controller.Publish)
 }
 
