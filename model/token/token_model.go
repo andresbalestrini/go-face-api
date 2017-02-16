@@ -1,5 +1,9 @@
 package token
 
 type AccessToken struct {
- 	Token  string
+ 	Token  string `json:"access_token"`
+ }
+
+ type Token struct {
+	 AccessToken string
  }

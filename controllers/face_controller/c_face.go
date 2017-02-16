@@ -9,7 +9,9 @@ import(
 	"github.com/andresbalestrini/go-face-api/service/face_service"
 	"github.com/andresbalestrini/go-face-api/model/message"
 	"github.com/andresbalestrini/go-face-api/model/token"
-	//"fmt"
+	"github.com/andresbalestrini/go-face-api/model/profile"
+	"encoding/json"
+	"fmt"
 	//"io/ioutil"
 )
 var (
@@ -21,106 +23,59 @@ var (
  		ClientID:     "1787876351474916", // change this to yours
  		ClientSecret: "6101caa72d74674b02667262c834ccb8",
  		RedirectURL:  "http://localhost:9090/permiso", // change this to your webserver adddress
- 		Scopes:       []string{"public_profile","publish_actions","user_relationships","user_friends"},
+ 		Scopes:       []string{"public_profile","publish_actions","user_relationships","user_friends","user_location","user_birthday"},
  		Endpoint: oauth2.Endpoint{
  			AuthURL:  "https://www.facebook.com/dialog/oauth",
  			TokenURL: "https://graph.facebook.com/oauth/access_token",
  		},
  	}
+	oauthStateString = "facestate"
 )
-
-	 //fmt.Printf("code: %s",code)
-	 //fmt.Printf("notacces: %s",notacces)
-	 /*
-	 if code != "" {
-
-		tok, err := fbConfig.Exchange(oauth2.NoContext, code)
-		if err != nil {
-			c.String(http.StatusBadRequest, err.Error())
-		}
-		fmt.Printf("token: %s",tok.AccessToken)
-		client := fbConfig.Client(oauth2.NoContext, tok)
-		/*
-		resp, err1 := client.Get("https://graph.facebook.com/me?fields=id,name,gender,locale,first_name,last_name,age_range&access_token=" + tok.AccessToken)
-		
-
-		if err1 != nil {
-			c.String(http.StatusBadRequest, err1.Error())
-		}
-		
-
-		//haciendo post
-		message := "usando mi api"
-		// Values asigna una clave de cadena a una lista de valores.
-		form := url.Values{}
-		// Add agrega el valor a la clave. Se añade a cualquier valor existente asociado con clave.
-    	form.Add("message", message)
-    	form.Add("access_token", tok.AccessToken)
-		// ==> https://graph.facebook.com/me/feed?message='message'&access_token='tok.AccessToken'
-		req, err2 := http.NewRequest("POST", "https://graph.facebook.com/me/feed?", strings.NewReader(form.Encode()))
-		if err2 !=nil {
-			c.String(http.StatusBadRequest,err2.Error())
-		}
-
-		resp2, err3 := client.Do(req)
-
-		if err3 !=nil {
-			c.String(http.StatusBadRequest,err3.Error())
-		}
-		
-		str, err4 :=	face_service.Readbody(resp2) 
-		if err4 != nil{
-			c.String(http.StatusBadRequest,err4.Error())
-		}
-
-		fmt.Printf("valor str: %s",str)
-		c.JSON(http.StatusOK,str)
-
-	 } else if notacces == "access_denied" {
-
-		c.String(http.StatusUnauthorized, "Permisos denegados por el usuario")
-
-	} else {		
-	 url := fbConfig.AuthCodeURL("state")
-	 c.Redirect(http.StatusTemporaryRedirect,url)
-	}
-	*/
 
  func Permissions(c *gin.Context){
 	 code := c.Query("code")
 	 notacces := c.Query("error")
-	 if code != ""{
+	 state := c.Query("state")
+ 	if state != oauthStateString && code != "" {
+		 c.String(http.StatusBadRequest,"invalid oauth state, expected '%s', got '%s'\n", oauthStateString, state)
+		 return	 
+	} else if code != ""{
 		// obtengo el token para retornarlo
 		tok, err := fbConfig.Exchange(oauth2.NoContext, code)		
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			return
 		}	
-		var acctoken token.AccessToken
-		acctoken.Token = tok.AccessToken
+		var acctoken token.Token
+		acctoken.AccessToken = tok.AccessToken
 		c.JSON(http.StatusOK,acctoken)		
 		 return
-	 }else if notacces == "access_denied"{
+	 } else if notacces == "access_denied"{
 		 c.String(http.StatusUnauthorized, "Permisos denegados por el usuario")
 		 return
 	 } else {
-		url := fbConfig.AuthCodeURL("state")
+		// Estado es un símbolo para proteger al usuario de ataques CSRF(). 
+		// Siempre debe proporcionar una cadena distinta de cero y validar que coincide con el parámetro de consulta de estado en su devolución
+		// de llamada de redireccionamiento.
+		url := fbConfig.AuthCodeURL(oauthStateString)
 	 	c.Redirect(http.StatusTemporaryRedirect,url)		
 	 }	 	 
  }
 
  func Publish(c *gin.Context){	 
 
-	var newstate message.Data	 
+	var newstate message.Data
 	
 	failed := c.BindJSON(&newstate)	
 
 	if failed != nil {
 		c.String(http.StatusBadRequest, failed.Error())
 		return
+	} else if newstate.Token == ""{
+		c.String(http.StatusBadRequest,"Error, debe suministrar un Token de acceso")
+		return
 	}
 
-	// creo cliente
 	//client := fbConfig.Client(oauth2.NoContext, newstate.Token)
 	client := http.Client{}
 	//haciendo post
@@ -152,25 +107,46 @@ var (
 	c.JSON(http.StatusOK,str)
  }
 
-/*
- func Family(c *gin.Context){
-	
-	client := fbConfig.Client(oauth2.NoContext, tok)
-	
-	//haciendo Get
-	resp2, err3 := client.Get("https://graph.facebook.com/me/family?")
 
-	if err3 !=nil {
-		c.String(http.StatusBadRequest,err3.Error())
+func Profile(c *gin.Context){
+
+	var accesstoken token.AccessToken
+	
+	failed := c.BindJSON(&accesstoken)	
+
+	if failed != nil {
+		c.String(http.StatusBadRequest, failed.Error())
+		return
+	} else if accesstoken.Token == ""{
+		c.String(http.StatusBadRequest,"Error, debe suministrar un Token de acceso")
 		return
 	}
 	
-	str, err4 := face_service.Readbody(resp2) 
-	if err4 != nil{
-		c.String(http.StatusBadRequest,err4.Error())
+	resp, err := http.Get("https://graph.facebook.com/me?fields=name,gender,locale,birthday&access_token=" + accesstoken.Token)
+
+	if err != nil{
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK,str)
- }
- */
+	var perfil profile.Dataprofile	
+	json.NewDecoder(resp.Body).Decode(&perfil)
+    fmt.Println(perfil)
+
+	resp1, err1 := http.Get("https://graph.facebook.com/me/family?access_token=" + accesstoken.Token)
+
+	if err1 != nil{
+		c.String(http.StatusBadRequest, err1.Error())
+		return
+	}
+
+	var familia profile.Arrayfamily
+	json.NewDecoder(resp1.Body).Decode(&familia)
+
+	var response profile.Response
+
+	response.Family = familia
+	response.Profile = perfil
+
+	c.JSON(http.StatusOK, response)
+}
