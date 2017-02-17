@@ -11,7 +11,6 @@ import(
 	"github.com/andresbalestrini/go-face-api/model/token"
 	"github.com/andresbalestrini/go-face-api/model/profile"
 	"encoding/json"
-	"fmt"
 )
 var (
  // generate loginURL
