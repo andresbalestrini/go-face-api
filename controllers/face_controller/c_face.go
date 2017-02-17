@@ -12,7 +12,6 @@ import(
 	"github.com/andresbalestrini/go-face-api/model/profile"
 	"encoding/json"
 	"fmt"
-	//"io/ioutil"
 )
 var (
  // generate loginURL
@@ -23,7 +22,7 @@ var (
  		ClientID:     "1787876351474916", // change this to yours
  		ClientSecret: "6101caa72d74674b02667262c834ccb8",
  		RedirectURL:  "http://localhost:9090/permiso", // change this to your webserver adddress
- 		Scopes:       []string{"public_profile","publish_actions","user_relationships","user_friends","user_location","user_birthday"},
+ 		Scopes:       []string{"public_profile","publish_actions","user_relationships","user_location","user_birthday"},
  		Endpoint: oauth2.Endpoint{
  			AuthURL:  "https://www.facebook.com/dialog/oauth",
  			TokenURL: "https://graph.facebook.com/oauth/access_token",
@@ -76,7 +75,7 @@ var (
 		return
 	}
 
-	//client := fbConfig.Client(oauth2.NoContext, newstate.Token)
+	// creamos un cliente http
 	client := http.Client{}
 	//haciendo post
 	// Values asigna una clave de cadena a una lista de valores.
@@ -131,7 +130,6 @@ func Profile(c *gin.Context){
 
 	var perfil profile.Dataprofile	
 	json.NewDecoder(resp.Body).Decode(&perfil)
-    fmt.Println(perfil)
 
 	resp1, err1 := http.Get("https://graph.facebook.com/me/family?access_token=" + accesstoken.Token)
 
@@ -141,6 +139,10 @@ func Profile(c *gin.Context){
 	}
 
 	var familia profile.Arrayfamily
+	// Un Decoder lee y decodifica los valores JSON de un flujo de entrada.
+	// NewDecoder devuelve un nuevo decodificador que lee desde resp1.Body
+	// Decode lee el siguiente valor codificado JSON de su entrada y lo almacena en familia.
+	// Es decir que los valos JSON del body son decodificados en un Decoder por NewDecoder y luego con Decode se almacenan en familia
 	json.NewDecoder(resp1.Body).Decode(&familia)
 
 	var response profile.Response
